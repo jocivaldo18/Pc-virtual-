@@ -1,0 +1,45 @@
+name: Windows Cloud PC - Moonlight (Configurado)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Iniciando Host Moonlight
+    runs-on: windows-latest
+    timeout-minutes: 10080
+
+    steps:
+      - name: Instalando Sunshine e Ngrok
+        run: |
+          # Instala o servidor do Moonlight (Sunshine) e o túnel (Ngrok)
+          choco install sunshine ngrok -y
+
+      - name: Configurar Autenticação e Firewall
+        run: |
+          # Configura o seu token pessoal para liberar o acesso
+          ngrok config add-authtoken 2LEd73AJAA8iWuFDlDD8Rbb5pHv_4eEP2Pj1AFT3dRed71Ds8
+          
+          # Abre as portas necessárias no firewall do Windows
+          netsh advfirewall firewall add rule name="Sunshine" dir=in action=allow protocol=TCP localport=47984,47989,47990,48010
+          netsh advfirewall firewall add rule name="Sunshine" dir=in action=allow protocol=UDP localport=47998-48010
+
+      - name: Iniciar Servidor e Gerar Link
+        run: |
+          # Inicia o Sunshine em segundo plano[cite: 1]
+          Start-Process "C:\Program Files\Sunshine\sunshine.exe"
+          Start-Sleep -Seconds 15
+          
+          # Cria o túnel para o painel de controle (Porta 47990)[cite: 1]
+          Start-Process ngrok -ArgumentList "http 47990"
+          Start-Sleep -Seconds 10
+          
+          # EXIBE O LINK NO LOG DO GITHUB (COPIE ESTE LINK)[cite: 1]
+          Write-Host "--- COPIE O LINK ABAIXO E COLE NO SEU NAVEGADOR ---"
+          Invoke-RestMethod http://127.0.0.1:4040/api/tunnels | Select-Object -ExpandProperty tunnels | Select-Object -ExpandProperty public_url
+          Write-Host "--------------------------------------------------"
+
+      - name: Manter Execução
+        run: |
+          # Mantém a máquina ligada por 7 dias como no original[cite: 1]
+          Start-Sleep -Seconds 604800
