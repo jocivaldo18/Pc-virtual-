@@ -1,0 +1,29 @@
+name: Windows Cloud PC - Moonlight (Fix)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - name: Instalando Dependências e Sunshine
+        run: |
+          # Instala Sunshine e Chocolatey para facilitar drivers
+          Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
+          choco install sunshine -y
+          
+      - name: Configurar Firewall
+        run: |
+          netsh advfirewall firewall add rule name="Sunshine" dir=in action=allow protocol=TCP localport=47984,47989,47990,48010
+          netsh advfirewall firewall add rule name="Sunshine" dir=in action=allow protocol=UDP localport=47998-48010
+
+      - name: Iniciar Sunshine
+        run: |
+          # Inicia em modo background
+          Start-Process "C:\Program Files\Sunshine\sunshine.exe"
+          
+      - name: Manter Ativo
+        run: |
+          Write-Host "PC Pronto! Verifique o IP ou use Tailscale para conectar."
+          Start-Sleep -Seconds 604800
